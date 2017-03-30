@@ -6,12 +6,12 @@
 	var selectedLayers = curItem.selectedLayers;
 	var selectedProperties = curItem.selectedProperties;
 
-	if (selectedLayers == 0) { // eslint-disable-line eqeqeq
+	if (selectedLayers.length == 0) { // eslint-disable-line eqeqeq
 		alert('Please Select at least one Layer');
 		return;
 	}
 
-	if (selectedProperties == 0) { // eslint-disable-line eqeqeq
+	if (selectedProperties.length == 0) { // eslint-disable-line eqeqeq
 		alert('Please Select at least one Property (Scale, Opacity, etc)');
 		return;
 	}
