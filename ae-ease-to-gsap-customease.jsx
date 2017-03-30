@@ -1,10 +1,9 @@
-// This script currently can't automatically determine FPS, just change this number for now.
-(function () {
+﻿(function () {
 	'use strict';
 
-	var framerate = 60;
-
 	var curItem = app.project.activeItem;
+	var framerate = curItem.frameRate;
+
 	var selectedLayers = curItem.selectedLayers;
 	var selectedProperties = app.project.activeItem.selectedProperties;
 	if (selectedLayers == 0) { // eslint-disable-line eqeqeq
