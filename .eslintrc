@@ -1,12 +1,10 @@
 {
-	"extends": "xo",
-	"globals": {
-		"$": true,
-		"app": true,
-		"alert": true,
-		"system": true
-	},
+	"extends": [
+		"xo",
+		"aftereffects"
+	],
 	"rules": {
-		"no-alert": [0]
+		"no-alert": [0],
+		"unicode-bom": [0]
 	}
 }
