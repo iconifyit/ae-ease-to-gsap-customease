@@ -116,6 +116,15 @@
 		return;
 	}
 
+	// Set to true to clamp Infinite values to ± 10
+	var clampInfiniteValues = true;
+
+	// Set to true to output as array of bezier values:
+	//		[0.42,0.00,0.58,1.00],[0.68,-0.55,0.27,1.55]
+	// or false to output as GSAP curve:
+	// 		M0,0C10.08,0,13.92,-100,24,-100C40.32,-45,30.48,-255,48,-200
+	var outputAsBezierCurveArray = false;
+
 	var framerate = curItem.frameRate;
 	var selectedProperties = curItem.selectedProperties;
 
@@ -126,20 +135,82 @@
 
 	for (var f = 0; f < selectedProperties.length; f++) {
 		var currentProperty = selectedProperties[f];
-		var path = getPath(currentProperty);
-		if (path === null) {
-			continue;
+
+		if (outputAsBezierCurveArray) {
+			var bezierCurveArrayString = buildBezierCurveArrayString(selectedProperties[0]);
+
+			log(bezierCurveArrayString);
+			log();
+			log();
+			copyTextToClipboard(bezierCurveArrayString);
+			alert('Copied to clipboard:\n' + bezierCurveArrayString);
+		} else {
+			var path = getPath(currentProperty);
+			if (path === null) {
+				continue;
+			}
+
+			var pathString = path.toString();
+			log(pathString);
+			log();
+			log();
+			copyTextToClipboard(pathString);
+			alert('Copied to clipboard:\n' + pathString +
+				'\n\nPaste directly into a GSAP CustomEase, like:\n' +
+				'CustomEase.create(\'myCustomEase\', \'' + pathString + '\');' +
+				'\n\nMore info: https://greensock.com/docs/#/HTML5/GSAP/Easing/CustomEase/');
+		}
+	}
+
+	// Above this line is the main logic of the script.
+	/* ---------------------------------------------------------------------------- */
+	// Below this line are the helper functions that the main logic uses.
+
+	function buildBezierCurveArrayString (property) {
+		var bezierCurveArray = [];
+		for (var i = 1, il = property.numKeys; i < il; i++) {
+			bezierCurveArray.push(getBezierVals(property, i, i+1));
 		}
 
-		var pathString = path.toString();
-		log(pathString);
-		log();
-		log();
-		copyTextToClipboard(pathString);
-		alert('Copied to clipboard:\n' + pathString +
-			'\n\nPaste directly into a GSAP CustomEase, like:\n' +
-			'CustomEase.create(\'myCustomEase\', \'' + pathString + '\');' +
-			'\n\nMore info: https://greensock.com/docs/#/HTML5/GSAP/Easing/CustomEase/');
+		return "[" + bezierCurveArray.join("],[") + "]";
+	}
+
+	function getNormalizedCurve (tweenData, p0, p1) {
+		function normalize (val, min, max) {
+			var delta = max - min;
+			var normalized = (val - min)/delta;
+
+			// Clamps infinite values. Optional.
+			if (clampInfiniteValues) {
+				if (normalized === Number.NEGATIVE_INFINITY)
+					normalized = -10;
+				if (normalized === Number.POSITIVE_INFINITY)
+					normalized = 10;
+			}
+
+			return normalized;
+		}
+
+		var x1 = normalize(p0.x, tweenData.startFrame, tweenData.endFrame).toFixed(2);
+		var y1 = normalize(p0.y, tweenData.startValue, tweenData.endValue).toFixed(2);
+
+		if (isNaN(y1)) y1 = x1;
+
+		var x2 = normalize(p1.x, tweenData.startFrame, tweenData.endFrame).toFixed(2);
+		var y2 = normalize(p1.y, tweenData.startValue, tweenData.endValue).toFixed(2);
+
+		if (isNaN(y2)) y2 = x2;
+
+		return [x1, y1, x2, y2];
+	}
+
+	function getBezierVals (prop, startIndex, endIndex) {
+		var tweenData = calcTweenData(prop, startIndex, endIndex);
+		var outgoingPoint = calcOutgoingControlPoint(tweenData, prop, startIndex);
+		var incomingPoint = calcIncomingControlPoint(tweenData, prop, startIndex);
+
+
+		return getNormalizedCurve(tweenData, outgoingPoint, incomingPoint);
 	}
 
 	function getPath(property) {
@@ -199,10 +270,6 @@
 		);
 		return command;
 	}
-
-	// Above this line is the main logic of the script.
-	/* ---------------------------------------------------------------------------- */
-	// Below this line are the helper functions that the main logic uses.
 
 	function calcTweenData(property, startIndex, endIndex) {
 		var startTime = property.keyTime(startIndex);
